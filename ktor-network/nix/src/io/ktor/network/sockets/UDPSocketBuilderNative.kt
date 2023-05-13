@@ -4,9 +4,9 @@
 
 package io.ktor.network.sockets
 
+import io.ktor.network.NetworkInterface
 import io.ktor.network.selector.*
 import io.ktor.network.util.*
-import io.ktor.util.network.*
 import kotlinx.cinterop.*
 import platform.posix.*
 
@@ -53,6 +53,38 @@ internal actual fun UDPSocketBuilder.Companion.bindUDP(
 
     address.nativeAddress { pointer, size ->
         bind(descriptor, pointer, size).check()
+    }
+
+    return DatagramSocketNative(
+        descriptor = descriptor,
+        selector = selector,
+        remote = null,
+        parent = selector.coroutineContext
+    )
+}
+
+internal actual fun UDPSocketBuilder.Companion.joinGroupUDP(
+    selector: SelectorManager,
+    multicastAddress: InetSocketAddress?,
+    networkInterface: NetworkInterface,
+    options: SocketOptions.UDPSocketOptions
+): BoundDatagramSocket {
+    val address = (multicastAddress?.address ?: getAnyLocalAddress()) as NativeIPv4SocketAddress
+    val descriptor = socket(address.family.convert(), SOCK_DGRAM, 0).check()
+
+    assignOptions(descriptor, options)
+    nonBlocking(descriptor)
+
+    address.nativeAddress { pointer, size ->
+        bind(descriptor, pointer, size).check()
+    }
+
+    val interf = networkInterface.networkInterfaceAddress
+
+    val mreq = NativeMulticastGroup(address.address, interf.s_addr)
+
+    mreq.nativeAddress { pointer, size ->
+        setsockopt(descriptor, IPPROTO_IP, IP_ADD_MEMBERSHIP, pointer, size).check()
     }
 
     return DatagramSocketNative(

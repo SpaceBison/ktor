@@ -1,5 +1,6 @@
 package io.ktor.network.sockets
 
+import io.ktor.network.*
 import io.ktor.network.selector.*
 
 /**
@@ -39,5 +40,12 @@ internal expect fun UDPSocketBuilder.Companion.connectUDP(
 internal expect fun UDPSocketBuilder.Companion.bindUDP(
     selector: SelectorManager,
     localAddress: SocketAddress?,
+    options: SocketOptions.UDPSocketOptions
+): BoundDatagramSocket
+
+internal expect fun UDPSocketBuilder.Companion.joinGroupUDP(
+    selector: SelectorManager,
+    multicastAddress: InetSocketAddress?,
+    networkInterface: NetworkInterface,
     options: SocketOptions.UDPSocketOptions
 ): BoundDatagramSocket

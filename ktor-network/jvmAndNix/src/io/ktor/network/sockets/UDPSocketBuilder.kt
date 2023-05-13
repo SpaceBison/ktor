@@ -27,6 +27,13 @@ public class UDPSocketBuilder(
         configure: SocketOptions.UDPSocketOptions.() -> Unit = {}
     ): ConnectedDatagramSocket = connectUDP(selector, remoteAddress, localAddress, options.udp().apply(configure))
 
+    public fun joinGroup(
+        networkInterface: NetworkInterface,
+        multicastAddress: InetSocketAddress? = null,
+        configure: SocketOptions.UDPSocketOptions.() -> Unit = {}
+    ): BoundDatagramSocket =
+        joinGroupUDP(selector, multicastAddress, networkInterface, options.udp().apply(configure))
+
     public companion object
 }
 

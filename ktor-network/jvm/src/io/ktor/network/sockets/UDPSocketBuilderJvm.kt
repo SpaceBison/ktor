@@ -4,8 +4,9 @@
 
 package io.ktor.network.sockets
 
-import io.ktor.network.*
-import io.ktor.network.selector.*
+import io.ktor.network.NetworkInterface
+import io.ktor.network.selector.SelectorManager
+import io.ktor.network.selector.buildOrClose
 import java.net.MulticastSocket
 
 internal actual fun UDPSocketBuilder.Companion.connectUDP(
@@ -45,17 +46,20 @@ internal actual fun UDPSocketBuilder.Companion.bindUDP(
 
 internal actual fun UDPSocketBuilder.Companion.joinGroupUDP(
     selector: SelectorManager,
-    multicastAddress: InetSocketAddress?,
     networkInterface: NetworkInterface,
+    multicastAddress: InetSocketAddress,
     options: SocketOptions.UDPSocketOptions
 ): BoundDatagramSocket = selector.buildOrClose({ openDatagramChannel() }) {
     assignOptions(options)
     nonBlocking()
 
     if (java7NetworkApisAvailable) {
-        join(multicastAddress?.address?.address, networkInterface.networkInterface)
+        bind(java.net.InetSocketAddress(multicastAddress.port))
+        join(multicastAddress.address.address, networkInterface.networkInterface)
     } else {
-        (socket() as MulticastSocket).joinGroup(multicastAddress?.toJavaAddress(), networkInterface.networkInterface)
+        val multicastSocket = socket() as MulticastSocket
+        multicastSocket.bind(java.net.InetSocketAddress(multicastAddress.port))
+        multicastSocket.joinGroup(multicastAddress.toJavaAddress(), networkInterface.networkInterface)
     }
 
     return DatagramSocketImpl(this, selector)

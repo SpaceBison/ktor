@@ -1,7 +1,7 @@
 package io.ktor.network.sockets
 
-import io.ktor.network.*
-import io.ktor.network.selector.*
+import io.ktor.network.NetworkInterface
+import io.ktor.network.selector.SelectorManager
 
 /**
  * UDP socket builder
@@ -29,10 +29,10 @@ public class UDPSocketBuilder(
 
     public fun joinGroup(
         networkInterface: NetworkInterface,
-        multicastAddress: InetSocketAddress? = null,
+        multicastAddress: InetSocketAddress,
         configure: SocketOptions.UDPSocketOptions.() -> Unit = {}
     ): BoundDatagramSocket =
-        joinGroupUDP(selector, multicastAddress, networkInterface, options.udp().apply(configure))
+        joinGroupUDP(selector, networkInterface, multicastAddress, options.udp().apply(configure))
 
     public companion object
 }
@@ -52,7 +52,7 @@ internal expect fun UDPSocketBuilder.Companion.bindUDP(
 
 internal expect fun UDPSocketBuilder.Companion.joinGroupUDP(
     selector: SelectorManager,
-    multicastAddress: InetSocketAddress?,
     networkInterface: NetworkInterface,
+    multicastAddress: InetSocketAddress,
     options: SocketOptions.UDPSocketOptions
 ): BoundDatagramSocket
